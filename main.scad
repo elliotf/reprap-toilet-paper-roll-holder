@@ -18,6 +18,7 @@ right = 1;
 inside = -1;
 outside = 1;
 
+arm_side      = left;
 arm_side      = right;
 arm_angle     = 20;
 arm_thickness = 10;
@@ -26,8 +27,8 @@ arm_pos_x = (roll_len/2+arm_thickness/2)*arm_side;
 retainer_pos_x = (roll_len/2+retainer_rim_thickness/2)*arm_side*-1;
 
 mount_plate_screw_spacing = 28.5;
-mount_plate_screw_diam = 8;
-mount_plate_screw_head_diam = 12;
+mount_plate_screw_diam = 4.75;
+mount_plate_screw_head_diam = 24;
 mount_plate_height = 60;
 mount_plate_width = mount_plate_screw_spacing+mount_plate_screw_head_diam;
 mount_plate_thickness = 10;
@@ -35,16 +36,23 @@ mount_plate_thickness = 10;
 mount_plate_pos_z = tube_support_diam/2-mount_plate_height/2;
 dist_from_wall = roll_outer/2 + wall_clearance + mount_plate_thickness;
 
+module accurate_hole(diam, height, sides=8) {
+  r = 1 / cos(180/sides) / 2 * diam;
+
+  cylinder(r=r,h=height,center=true,$fn=sides);
+}
+
 module roll_holder() {
   rotate([0,90,0])
-    cylinder(r=tube_support_diam/2,h=roll_len,center=true,$fn=resolution);
+    accurate_hole(tube_support_diam,roll_len,resolution);
 
   translate([retainer_pos_x,0,0]) {
     rotate([0,90,0])
       hull() {
-        cylinder(r=tube_support_diam/2,h=retainer_rim_thickness,center=true,$fn=resolution);
+        accurate_hole(tube_support_diam,retainer_rim_thickness,resolution);
+
         translate([0,0,(retainer_rim_thickness/2-retainer_rim_edge_thickness/2)*arm_side])
-          cylinder(r=roll_inner/2,h=retainer_rim_edge_thickness,center=true,$fn=resolution);
+          accurate_hole(roll_inner,retainer_rim_edge_thickness,resolution);
       }
   }
 
@@ -57,7 +65,7 @@ module support_arm() {
   module body() {
     hull() {
       rotate([0,90,0])
-        cylinder(r=tube_support_diam/2,h=arm_thickness,center=true,$fn=resolution);
+        accurate_hole(tube_support_diam,arm_thickness,resolution);
 
       translate([0,dist_from_wall,mount_plate_pos_z]) {
         cube([arm_thickness,mount_plate_thickness,mount_plate_height],center=true);
@@ -65,14 +73,14 @@ module support_arm() {
     }
 
     hull() {
-      translate([0,dist_from_wall,mount_plate_pos_z+2]) {
-        cube([arm_thickness,mount_plate_thickness,mount_plate_height-4],center=true);
+      translate([0,dist_from_wall,mount_plate_pos_z+2.5]) {
+        cube([arm_thickness,mount_plate_thickness,mount_plate_height-5],center=true);
       }
 
       for(side=[left,right]) {
         translate([mount_plate_screw_spacing/2*side,dist_from_wall,mount_plate_pos_z]) {
-            rotate([90,0,0]) rotate([0,0,22.5])
-              cylinder(r=mount_plate_screw_head_diam/2+5,h=mount_plate_thickness,center=true);
+          rotate([90,0,0]) rotate([0,0,22.5])
+            accurate_hole(mount_plate_screw_head_diam,mount_plate_thickness,resolution);
         }
       }
     }
@@ -81,7 +89,7 @@ module support_arm() {
   module holes() {
     for(side=[left,right]) {
       translate([mount_plate_screw_spacing/2*side,dist_from_wall,mount_plate_pos_z]) rotate([90,0,0]) rotate([0,0,22.5])
-        cylinder(r=mount_plate_screw_diam/2,h=mount_plate_thickness+1,center=true,$fn=8);
+        accurate_hole(mount_plate_screw_diam,mount_plate_thickness+1,8);
     }
   }
 
